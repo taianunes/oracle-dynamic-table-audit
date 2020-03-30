@@ -1,8 +1,8 @@
-PRO CREATE PROCEDURE THAT GENERATES CUSTOM TRIGGER DDL
+PRO CREATING PROCEDURE THAT GENERATES CUSTOM TRIGGER DDL
 
-CREATE OR REPLACE PROCEDURE PRC_GEN_TRIGGER_SCRIPT (P_OWNER       IN VARCHAR2,
-                                                    P_TABLE       IN VARCHAR2,
-                                                    P_LOG_ERROR   IN BOOLEAN DEFAULT TRUE)
+CREATE OR REPLACE PROCEDURE "&&OWNER"."PRC_GEN_TRIGGER_SCRIPT" (P_OWNER       IN VARCHAR2,
+                                                                P_TABLE       IN VARCHAR2,
+                                                                P_LOG_ERROR   IN BOOLEAN DEFAULT TRUE)
 IS
    V_TRG_TEXT   VARCHAR2 (32000);
 
@@ -21,8 +21,9 @@ IS
 BEGIN
    FOR R IN C_TABLE
    LOOP
-      V_TRG_TEXT := 'CREATE OR REPLACE TRIGGER '|| UPPER(P_OWNER) ||'.TRG_AUD_' || R.TABLE_NAME || CHR (10);
-      V_TRG_TEXT := V_TRG_TEXT || ' AFTER INSERT OR UPDATE OR DELETE ON '|| UPPER(P_OWNER) || '.' || R.TABLE_NAME || CHR (10);
+      V_TRG_TEXT := 'CREATE OR REPLACE TRIGGER ' || UPPER (P_OWNER) || '.TRG_AUD_' || R.TABLE_NAME || CHR (10);
+      V_TRG_TEXT :=
+         V_TRG_TEXT || ' AFTER INSERT OR UPDATE OR DELETE ON ' || UPPER (P_OWNER) || '.' || R.TABLE_NAME || CHR (10);
       V_TRG_TEXT := V_TRG_TEXT || 'FOR EACH ROW' || CHR (10) || ' DISABLE ';
       V_TRG_TEXT :=
             V_TRG_TEXT
@@ -69,21 +70,25 @@ BEGIN
          || 'ELSE V_TRANSACT := ''D'';'
          || CHR (10)
          || 'END IF;'
-         || CHR (10);
-
-      V_TRG_TEXT :=
-         V_TRG_TEXT || 'IF FNC_DML_ACCESS_CHECK (''' || P_OWNER || ''', ''' || P_TABLE || ''', V_TRANSACT) THEN PRC_CALL_PKG;';
+         || CHR (10)
+         || 'IF FNC_DML_ACCESS_CHECK ('''
+         || P_OWNER
+         || ''', '''
+         || P_TABLE
+         || ''', v_transact) THEN PRC_CALL_PKG;'
+         || CHR (10)
+         || 'ELSE V_BLK := ''Y''; ';
 
       IF P_LOG_ERROR
       THEN
-         V_TRG_TEXT :=
-               V_TRG_TEXT
-            || 'ELSE V_BLK := ''Y''; '
-            || CHR (10)
-            || 'PRC_CALL_PKG;'
-            || CHR (10)
-            || 'RAISE_APPLICATION_ERROR (-20001,''TRANSACTION NOT ALLOWED, PLEASE CONTACT YOUR SYSTEM ADMINISTRATOR.'');';
+         V_TRG_TEXT := V_TRG_TEXT || CHR (10) || 'PRC_CALL_PKG;';
       END IF;
+
+      V_TRG_TEXT :=
+            V_TRG_TEXT
+         || CHR (10)
+         || 'RAISE_APPLICATION_ERROR (-20001,''Transaction not allowed, please contact your system administrator.'');';
+
 
       V_TRG_TEXT :=
             V_TRG_TEXT
@@ -106,11 +111,11 @@ BEGIN
          || CHR (10)
          || 'RAISE;'
          || CHR (10)
-         || 'END;'
-         || CHR (10)
-         || '/';
+         || 'END;';
 
       BEGIN
+         --EXECUTE IMMEDIATE(V_TRG_TEXT);
+         DBMS_OUTPUT.PUT_LINE ('TEXTO TRIGGER');
          DBMS_OUTPUT.PUT_LINE (V_TRG_TEXT || CHR (10) || CHR (10));
       EXCEPTION
          WHEN OTHERS
