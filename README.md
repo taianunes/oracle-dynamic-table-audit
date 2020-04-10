@@ -108,30 +108,33 @@ Otherwise none DML will be allowed on target table for the moment you ENABLE tha
 -- For PERMISSIONS column, you need to set one to three letter as desired DML configuration
 -- I = INSERT / U = UPDATE / D = DELETE
 --
-INSERT INTO MONIT_DML_ACCESS(ROW_ID,
-							 USERNAME,
-							 OSUSER,
-							 MACHINE,
-							 IP_ADDRESS,
-							 PROGRAM,
-							 VALID_ORDER,
-							 OWNER,
-							 TABLE_NAME,
-							 PERMISSIONS,
-							 LOG,
-							 OBS)
-					 VALUES ('1',
-					 	     '%',
-					 	     '%',
-					 	     '%',
-					 	     '%',
-					 	     '%',
-					 	     '1',
-					 	     '<OWNER>',
-					 	     '<TABLE>',
-					 	     'IUD',
-					 	     'Y',
-					 	     'An entry that allows any user DML and logs it' );
+INSERT INTO MONIT_DML_ACCESS
+			(ROW_ID,
+			USERNAME,
+			OSUSER,
+			MACHINE,
+			IP_ADDRESS,
+			PROGRAM,
+			VALID_ORDER,
+			OWNER,
+			TABLE_NAME,
+			PERMISSIONS,
+			LOG,
+			OBS)
+	 VALUES 
+			('1',
+			'%',
+			'%',
+			'%',
+			'%',
+			'%',
+			'1',
+			'<OWNER>',
+			'<TABLE>',
+			'IUD',
+			'Y',
+			'An entry that allows any user DML and logs it' );
+
 COMMIT;
 
 ```
