@@ -102,15 +102,37 @@ loading of the Product Media (PM) and Sales History (SH) schemas.
 It's required to insert and entry on `MONIT_DML_ACCESS` for each table that contains the trigger created by the procedure that was created.
 Otherwise none DML will be allowed on target table for the moment you ENABLE that trigger.
 
-```
+```sql
 -- An example of entry that allows any user to make DML and logs it.
 --
 -- For PERMISSIONS column, you need to set one to three letter as desired DML configuration
 -- I = INSERT / U = UPDATE / D = DELETE
 --
-INSERT INTO MONIT_DML_ACCESS(ROW_ID, USERNAME, OSUSER, MACHINE, IP_ADDRESS, PROGRAM, VALID_ORDER, OWNER,     TABLE_NAME, PERMISSIONS, LOG, OBS)
-					 VALUES ('1',    '%',      '%',    '%',     '%',        '%',     '1', 		  '<OWNER>', '<TABLE>',  'IUD',       'Y', 'An entry that allows any user DML and logs it' );
-COMMIT;					 
+INSERT INTO MONIT_DML_ACCESS(ROW_ID,
+							 USERNAME,
+							 OSUSER,
+							 MACHINE,
+							 IP_ADDRESS,
+							 PROGRAM,
+							 VALID_ORDER,
+							 OWNER,
+							 TABLE_NAME,
+							 PERMISSIONS,
+							 LOG,
+							 OBS)
+					 VALUES ('1',
+					 	     '%',
+					 	     '%',
+					 	     '%',
+					 	     '%',
+					 	     '%',
+					 	     '1',
+					 	     '<OWNER>',
+					 	     '<TABLE>',
+					 	     'IUD',
+					 	     'Y',
+					 	     'An entry that allows any user DML and logs it' );
+COMMIT;
 
 ```
 
@@ -123,6 +145,6 @@ EXEC PRC_GEN_TRIGGER_SCRIPT( P_OWNER => '<OWNER>', P_TABLE => '<TABLE>', P_LOG_E
 ```
 Set parameter as informed bellow:
 
->P_OWNER -> TRIGGER OWNER
->P_TABLE -> BASE TABLE FOR TRIGGER
->P_LOG_ERROR -> DEFAULT=TRUE, SET TO FALSE, TO GET A TRIGGER THAT NOT LOGS WHEN USER DML GETS BLOCKED.
+* P_OWNER -> TRIGGER OWNER
+* P_TABLE -> BASE TABLE FOR TRIGGER
+* P_LOG_ERROR -> DEFAULT=TRUE, SET TO FALSE, TO GET A TRIGGER THAT NOT LOGS WHEN USER DML GETS BLOCKED.
