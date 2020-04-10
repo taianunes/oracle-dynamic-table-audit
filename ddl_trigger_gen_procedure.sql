@@ -1,8 +1,13 @@
-PRO CREATE PROCEDURE THAT GENERATES CUSTOM TRIGGER DDL
+SET SERVEROUT ON
+SET VERIFY OFF
 
-CREATE OR REPLACE PROCEDURE PRC_GEN_TRIGGER_SCRIPT (P_OWNER       IN VARCHAR2,
-                                                    P_TABLE       IN VARCHAR2,
-                                                    P_LOG_ERROR   IN BOOLEAN DEFAULT TRUE)
+SPO DDL_TRIGGER_GEN_PROCEDURE.log
+
+PRO CREATING PROCEDURE THAT GENERATES CUSTOM TRIGGER DDL
+PRO
+CREATE OR REPLACE PROCEDURE "&&OWNER"."PRC_GEN_TRIGGER_SCRIPT" (P_OWNER       IN VARCHAR2,
+                                                                P_TABLE       IN VARCHAR2,
+                                                                P_LOG_ERROR   IN BOOLEAN DEFAULT TRUE)
 IS
    V_TRG_TEXT   VARCHAR2 (32000);
 
@@ -21,14 +26,17 @@ IS
 BEGIN
    FOR R IN C_TABLE
    LOOP
-      V_TRG_TEXT := 'CREATE OR REPLACE TRIGGER '|| UPPER(P_OWNER) ||'.TRG_AUD_' || R.TABLE_NAME || CHR (10);
-      V_TRG_TEXT := V_TRG_TEXT || ' AFTER INSERT OR UPDATE OR DELETE ON '|| UPPER(P_OWNER) || '.' || R.TABLE_NAME || CHR (10);
+      V_TRG_TEXT := 'CREATE OR REPLACE TRIGGER ' || UPPER (P_OWNER) || '.TRG_AUD_' || R.TABLE_NAME || CHR (10);
+      V_TRG_TEXT :=
+         V_TRG_TEXT || ' AFTER INSERT OR UPDATE OR DELETE ON ' || UPPER (P_OWNER) || '.' || R.TABLE_NAME || CHR (10);
       V_TRG_TEXT := V_TRG_TEXT || 'FOR EACH ROW' || CHR (10) || ' DISABLE ';
       V_TRG_TEXT :=
             V_TRG_TEXT
          || 'DECLARE '
          || 'V_TRANSACT CHAR(1);'
          || CHR (10)
+         || 'V_LOG CHAR(1) := ''N'';'
+         || CHR (10)         
          || 'V_SYSDATE DATE :=SYSDATE;'
          || CHR (10)
          || ' V_BLK CHAR := ''N''; '
@@ -59,6 +67,12 @@ BEGIN
             || CHR (10);
       END LOOP;
 
+FNC_DML_ACCESS_CHECK ('SIEBEL', 'S_APP_VIEW', V_TRANSACT, V_LOG);
+
+IF V_LOG = 'Y' THEN
+PRC_CALL_PKG;
+ELSE V_LOG = 'F' THEN
+
       V_TRG_TEXT := V_TRG_TEXT || 'END;' || CHR (10) || 'BEGIN' || CHR (10);
       V_TRG_TEXT :=
             V_TRG_TEXT
@@ -69,21 +83,34 @@ BEGIN
          || 'ELSE V_TRANSACT := ''D'';'
          || CHR (10)
          || 'END IF;'
-         || CHR (10);
-
-      V_TRG_TEXT :=
-         V_TRG_TEXT || 'IF FNC_DML_ACCESS_CHECK (''' || P_OWNER || ''', ''' || P_TABLE || ''', V_TRANSACT) THEN PRC_CALL_PKG;';
+         || CHR (10)
+         || CHR (10)
+         || 'PRC_DML_ACCESS_CHECK ('''
+         || P_OWNER
+         || ''', '''
+         || P_TABLE
+         || ''', V_TRANSACT, V_LOG);'
+         || CHR (10)
+         || CHR (10)         
+         || 'IF V_LOG = ''N'' THEN'
+         || 'NULL;'
+         || CHR (10)         
+         || 'ELSIF V_LOG = ''Y'' THEN'
+         || 'THEN PRC_CALL_PKG;'
+         || CHR (10)
+         || 'ELSIF V_LOG = ''F'' THEN'
+         || CHR (10)         
+         || 'V_BLK := ''Y''; ';
 
       IF P_LOG_ERROR
       THEN
-         V_TRG_TEXT :=
-               V_TRG_TEXT
-            || 'ELSE V_BLK := ''Y''; '
-            || CHR (10)
-            || 'PRC_CALL_PKG;'
-            || CHR (10)
-            || 'RAISE_APPLICATION_ERROR (-20001,''TRANSACTION NOT ALLOWED, PLEASE CONTACT YOUR SYSTEM ADMINISTRATOR.'');';
+         V_TRG_TEXT := V_TRG_TEXT || CHR (10) || 'PRC_CALL_PKG;';
       END IF;
+
+      V_TRG_TEXT :=
+            V_TRG_TEXT
+         || CHR (10)
+         || 'RAISE_APPLICATION_ERROR (-20001,''Transaction not allowed, please contact your system administrator.'');';
 
       V_TRG_TEXT :=
             V_TRG_TEXT
@@ -106,9 +133,7 @@ BEGIN
          || CHR (10)
          || 'RAISE;'
          || CHR (10)
-         || 'END;'
-         || CHR (10)
-         || '/';
+         || 'END;';
 
       BEGIN
          DBMS_OUTPUT.PUT_LINE (V_TRG_TEXT || CHR (10) || CHR (10));
@@ -122,8 +147,16 @@ END;
 /
 
 PRO AFTER CREATION, YOU CAN EXEC THE PROCEDURE TO GENERATE TRIGGER CODE ON DBMS_OUTPUT
-PRO EXEC PRC_GEN_TRIGGER_SCRIPT( P_OWNER => '<OWNER>', P_TABLE => '<TABLE>', P_LOG_ERROR => TRUE)
+PRO
+PRO --Script
+PRO SET SERVEROUT ON
+SET VERIFY OFF
+PRO EXEC PRC_GEN_TRIGGER_SCRIPT( P_OWNER => '<OWNER>', P_TABLE => '<TABLE>', P_LOG_ERROR => TRUE);
+PRO --
+PRO
 PRO PARMETER DEFINITION:
 PRO P_OWNER -> TRIGGER OWNER
 PRO P_TABLE -> BASE TABLE FOR TRIGGER
 PRO P_LOG_ERROR -> DEFAULT=TRUE, SET TO FALSE, TO GET A TRIGGER THAT NOT LOGS WHEN USER DML GETS BLOCKED.
+
+SPO OFF
