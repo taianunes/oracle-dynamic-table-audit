@@ -1,4 +1,4 @@
--- Query for audit logs
+-- Query for pretty formmat audit logs
   
   SELECT 
          DECODE (dl.dml,  'D', 'DELETE',  'I', 'INSERT',  'U', 'UPDATE') dml,
