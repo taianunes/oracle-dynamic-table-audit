@@ -2,10 +2,13 @@
 
 ## 1. Introduction
 
-This repository contains the steps to create a set of Oracle PL/SQL objects
-for auditing changes on table stored data and access control to DML commands.
+This tools's goal is to provide a feature that allows control which DML can be executted on a table and audit those commands.
 
-The set of objects types are:
+The access can be customized based on a whitelist table named as `MONIT_DML_ACCESS`.  
+
+The scripts on this repository contains the steps to create a set of Oracle objects needed. 
+
+Following object types are created:
 
 - TABLES:
   * *Store audit data and DML access control*
